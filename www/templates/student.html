@@ -1,0 +1,11 @@
+<ion-view>
+  <ion-nav-title>{{ student.name || 'Student'}}</ion-nav-title>
+  <ion-content>
+    <div class="button-bar" ng-repeat="rating in student.ratings">
+        <a class="button button-large" ng-disabled="true" ng-repeat="r in ratings" ng-class="{'button-balanced':rating==r}">{{r}}</a>
+    </div>
+    <div class="button-bar">
+        <a class="button button-large button-positive" ng-repeat="rating in ratings" ng-click="addRating(rating)">{{ rating }}</a>
+    </div>
+  </ion-content>
+</ion-view>

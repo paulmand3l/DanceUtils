@@ -1,0 +1,21 @@
+/* Empty. Add your own CSS if you like */
+
+.item-divider a.button .icon:before,
+.item-divider a.button.icon:before,
+.item-divider a.button.icon-left:before,
+.item-divider a.button.icon-right:before {
+    margin-top: -8px;
+}
+
+.item-divider .button-icon .icon:before,
+.item-divider .button-icon.icon:before {
+    font-size: 22px;
+}
+
+textarea {
+    resize: none;
+}
+
+#student-count {
+    background-color: white;
+}

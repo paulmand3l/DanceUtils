@@ -1,0 +1,22 @@
+<ion-view>
+  <ion-nav-title>{{ event.name || 'Event'}}</ion-nav-title>
+  <ion-content>
+    <div class="list">
+      <label class="item item-input">
+        <span class="input-label">Event Name</span>
+        <input type="text" placeholder="Event Name" ng-model="event.name">
+      </label>
+      <label class="item item-input">
+        <span class="input-label">Ratings</span>
+        <input type="text" placeholder="Comma-delimited ratings" ng-model="event.ratings" ng-list>
+      </label>
+      <label class="item item-input">
+        <span class="input-label"># of Students</span>
+        <input id="student-count" type="text" ng-disabled="true" ng-model="students.count">
+      </div>
+    </div>
+    <div class="padding">
+      <button class="button button-block" ng-click="showModal()">Edit Student List</button>
+    </div>
+  </ion-content>
+</ion-view>
