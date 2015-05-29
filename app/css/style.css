@@ -1,0 +1,19 @@
+body {
+  padding-top: 50px;
+}
+
+.starter-template {
+  padding: 40px 15px;
+  text-align: center;
+}
+
+/* For UI Bootstrap */
+.nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+
+textarea { resize: none; }
+
+.pull-center {
+    text-align: center;
+    width: 1%;
+    white-space: nowrap;
+}
