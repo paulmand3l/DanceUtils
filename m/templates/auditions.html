@@ -1,0 +1,18 @@
+<ion-view view-title="Students">
+  <div class="bar bar-subheader item-input-inset">
+    <label class="item-input-wrapper">
+      <i class="icon ion-ios-search placeholder-icon"></i>
+      <input type="search" placeholder="Search" ng-model="searchText">
+    </label>
+  </div>
+  <ion-content class="has-subheader">
+    <ion-list>
+      <ion-item ng-repeat="student in students | orderBy:'name' | filter:searchText" href="#/app/auditions/{{student.$id}}">
+        {{student.name}}
+        <span class="item-note">
+          <span ng-repeat="rating in student.ratings">{{rating}}</span>
+        </span>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>

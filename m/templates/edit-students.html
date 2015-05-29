@@ -1,0 +1,18 @@
+<ion-modal-view>
+  <ion-header-bar>
+    <h1 class="title">Edit Student List</h1>
+    <div class="buttons">
+      <button class="button button-icon icon ion-close" ng-click="hideModal()"></button>
+    </div>
+  </ion-header-bar>
+  <ion-content>
+    <ion-list>
+      <label class="item item-input">
+        <textarea rows="10" ng-model="students.list" ng-list="&#10;" ng-trim="false"></textarea>
+      </label>
+    </ion-list>
+    <div class="padding">
+      <button class="button button-block button-positive" ng-click="save()">Save</button>
+    </div>
+  </ion-content>
+</ion-view>

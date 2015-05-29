@@ -1,0 +1,34 @@
+<div>
+    <div class="col-md-9">
+        <h1>My Events</h1>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Levels</th>
+                    <th>Students</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="(key, event) in events">
+                    <td>{{ event.name }}</td>
+                    <td>{{ event.levels.join(', ') }}</td>
+                    <td class="pull-center">{{ event.students.length }}</td>
+                    <td class="pull-center">
+                        <button type="button" class="btn btn-xs btn-info" ng-click="editEvent(key)">Edit</button>
+                        <button type="button" class="btn btn-xs btn-danger" ng-click="removeEvent(key)"><i class="fa fa-times"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-3 user-actions">
+        <h2>Account</h2>
+        <button type="button" class="btn btn-block btn-success" ng-click="createEvent()">Create New Event</button>
+
+        <hr />
+        <button type="button" class="btn btn-block btn-danger" ng-click="logout()">Log Out</button>
+    </div>
+</div>
