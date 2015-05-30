@@ -39,19 +39,21 @@ angular.module('web', ['web.controllers', 'ui.router', 'ui.bootstrap'])
   return $firebaseAuth(fbRef);
 })
 
-.factory('genCode', function(n) {
-  if (typeof n === "undefined") {
-    n = 5;
+.factory('codeGen', function() {
+  return function(n) {
+    if (typeof n === "undefined") {
+      n = 5;
+    }
+
+    var numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    var code = [];
+    for (var i = 0; i < n; i++) {
+      code.push(numbers[Math.floor(numbers.length*Math.random())]);
+    }
+
+    return code.join('');
   }
-
-  var numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-  var code = [];
-  for (var i = 0; i < n; i++) {
-    code.push(numbers[Math.floor(numbers.length*Math.random())]);
-  }
-
-  return code.join('');
 })
 
 .run(function($rootScope, $state) {

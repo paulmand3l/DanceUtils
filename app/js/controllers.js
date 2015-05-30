@@ -31,11 +31,34 @@ angular.module('web.controllers', ["firebase"])
 
 })
 
-.controller('EventsCtrl', function($scope, $rootScope, $location, $modal, $firebaseObject, $q, auth, currentAuth, usersRef, eventRef) {
+.factory('createAccessAccount', function($rootScope, usersRef, eventRef, auth) {
+  return function(uid, eventKey, accessCode) {
+    auth.$createUser({
+      email: accessCode + "@danceutils.com",
+      password: accessCode
+    }).then(function(userData) {
+      eventRef.child(eventKey).update({
+        accessAccount: userData.uid
+      });
+
+      usersRef.child(userData.uid).set({
+        event: eventKey,
+        owner: uid
+      });
+    });
+  }
+})
+
+.controller('EventsCtrl', function($scope, $rootScope, $location, $modal, $firebaseObject, $q, auth, currentAuth, fbRef, usersRef, eventRef, codeGen, createAccessAccount) {
   $rootScope.authData = currentAuth;
 
   $scope.events = {}
   var userEventRef = usersRef.child(currentAuth.uid).child('events');
+
+  $scope.sizeOf = function(obj) {
+    if (!obj) return 0;
+    return Object.keys(obj).length;
+  }
 
   userEventRef.on('child_added', function(snap) {
     $scope.events[snap.key()] = $firebaseObject(eventRef.child(snap.key()));
@@ -57,9 +80,18 @@ angular.module('web.controllers', ["firebase"])
       resolve: {
         newEvent: function() { return typeof eventKey === 'undefined'; },
         e: function() {
-          return !eventKey ? undefined : $q(function(resolve, reject) {
+          return !eventKey ? {} : $q(function(resolve, reject) {
             eventRef.child(eventKey).once("value", function(snap) {
-              resolve(snap.val());
+              var eventData = snap.val();
+
+              var students = [];
+              for (key in eventData.students) {
+                students.push(eventData.students[key].name);
+              }
+              students.sort(function(a, b) { return a.toLowerCase() > b.toLowerCase() ? 1 : -1; });
+              eventData.students = students;
+
+              resolve(eventData);
             }, function(err) {
               reject(err);
             });
@@ -71,16 +103,31 @@ angular.module('web.controllers', ["firebase"])
     modalInstance.result.then(function(e) {
       e.owner = currentAuth.uid;
 
-      if (typeof eventKey === 'undefined') {
+      var studentNames = e.students.slice();
+      delete e.students;
+
+      if (!eventKey) {
+        e.accessCode = codeGen();
         eventKey = eventRef.push(e).key();
-      } else {
-        eventRef.child(eventKey).update(e);
+        createAccessAccount(e.owner, eventKey, e.accessCode);
       }
 
-      var eventData = {}
+      var eventData = {};
       eventData[eventKey] = e.name;
+      userEventRef.update(eventData);
 
-      usersRef.child(currentAuth.uid).child('events').update(eventData);
+      eventRef.child(eventKey).update(e);
+
+      eventRef.child(eventKey).child('students').transaction(function(oldStudents) {
+        var students = {};
+        for (var i = 0; i < studentNames.length; i++) {
+          var safeName = btoa(studentNames[i]).replace(/\//g, '-');
+          students[safeName] = angular.extend(((oldStudents && oldStudents[safeName]) || {}), {
+            name: studentNames[i]
+          });
+        }
+        return students;
+      });
     });
   }
 
@@ -90,9 +137,12 @@ angular.module('web.controllers', ["firebase"])
       return;
     }
 
-    console.log('removing', eventKey);
-    eventRef.child(eventKey).remove();
-    userEventRef.child(eventKey).remove();
+    eventRef.child(eventKey).once('value', function(snap) {
+      usersRef.child(snap.val().accessAccount).remove();
+    });
+    eventRef.child(eventKey).remove(function() {
+      userEventRef.child(eventKey).remove();
+    });
   }
 
   $scope.logout = function() {
@@ -102,8 +152,7 @@ angular.module('web.controllers', ["firebase"])
 })
 
 .controller('EditEventCtrl', function($scope, $rootScope, $modalInstance, e, newEvent) {
-  $scope.e = e || {};
-
+  $scope.e = e;
   $scope.newEvent = newEvent
 
   $scope.save = function() {
@@ -112,7 +161,7 @@ angular.module('web.controllers', ["firebase"])
       return;
     };
 
-    $scope.e.students = ($scope.e.students || []).map(function(name) {
+    $scope.e.students = $scope.e.students.map(function(name) {
       return name.trim().replace(/\s+/, ' ');
     }).filter(function(name) {
       return name.length != 0;

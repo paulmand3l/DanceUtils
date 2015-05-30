@@ -1,0 +1,19 @@
+<ion-modal-view>
+  <ion-header-bar>
+    <h1 class="title">Add Event</h1>
+    <div class="buttons">
+      <button class="button button-icon icon ion-close" ng-click="hide()"></button>
+    </div>
+  </ion-header-bar>
+  <ion-content>
+    <div class="list">
+      <label class="item item-input">
+        <span class="input-label">Access Code</span>
+        <input type="text" pattern="[0-9]*" placeholder="12345" ng-model="e.accessCode">
+      </label>
+    </div>
+    <div class="padding">
+      <button class="button button-block button-positive" ng-click="enter()">Enter</button>
+    </div>
+  </ion-content>
+</ion-view>
