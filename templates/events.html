@@ -2,10 +2,11 @@
     <div class="col-md-9">
         <h1>My Events</h1>
 
-        <table class="table">
+        <table class="event-table table">
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Access Code</th>
                     <th>Levels</th>
                     <th>Students</th>
                     <th>Actions</th>
@@ -14,8 +15,9 @@
             <tbody>
                 <tr ng-repeat="(key, event) in events">
                     <td>{{ event.name }}</td>
-                    <td>{{ event.levels.join(', ') }}</td>
-                    <td class="pull-center">{{ event.students.length }}</td>
+                    <td class="pull-center">{{ event.accessCode }}</td>
+                    <td class="pull-center">{{ event.levels.join(', ') || 'None' }}</td>
+                    <td class="pull-center">{{ sizeOf(event.students) }}</td>
                     <td class="pull-center">
                         <button type="button" class="btn btn-xs btn-info" ng-click="editEvent(key)">Edit</button>
                         <button type="button" class="btn btn-xs btn-danger" ng-click="removeEvent(key)"><i class="fa fa-times"></i></button>

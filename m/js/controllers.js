@@ -1,85 +1,123 @@
 angular.module('starter.controllers', ["firebase"])
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout) {
-})
-
 .value('fbURL', 'https://danceutils.firebaseio.com')
 .service('fbRef', function(fbURL) {
   return new Firebase(fbURL);
 })
-.service('eventRef', function(fbRef) {
-  return fbRef.child('events').child('myEvent');
+.service('auth', function(fbRef, $firebaseAuth) {
+  return $firebaseAuth(fbRef);
 })
-.service('studentsRef', function(eventRef) {
-  return eventRef.child('students');
+.service('eventsRef', function(fbRef) {
+  return fbRef.child('events');
 })
-.service('ratingsRef', function(eventRef) {
-  return eventRef.child('ratings');
-})
-
-.controller('LoginCtrl', function($scope) {
-
+.service('usersRef', function(fbRef) {
+  return fbRef.child('users');
 })
 
-.controller('EventCtrl', function($scope, $ionicModal, $firebaseObject, $firebaseArray, eventRef, studentsRef) {
-  $firebaseObject(eventRef).$bindTo($scope, 'event');
-
-  $ionicModal.fromTemplateUrl('templates/edit-students.html', {
-    scope: $scope,
-    animation: 'slide-in-up'
-  }).then(function(modal) {
-    $scope.modal = modal;
-  });
-
-  $scope.showModal = function() {
-    $scope.modal.show();
+.service('myEvents', function() {
+  var mutate = function(modifier) {
+    var myEvents = JSON.parse(localStorage['events']);
+    myEvents = modifier(myEvents);
+    localStorage['events'] = JSON.stringify(myEvents);
   }
 
-  $scope.hideModal = function() {
-    $scope.modal.hide();
-  }
-
-  studentsRef.on("value", function(snap) {
-    var students = snap.val();
-    var nameList = [];
-    for (key in students) {
-      nameList.push(students[key].name)
-    }
-    $scope.students = {
-      list: nameList,
-      count: nameList.length
-    };
-  });
-
-  $scope.save = function() {
-    var names = $scope.students.list.map(function(name) {
-      return name.trim().replace(/\s+/, ' ');
+  this.add = function(key, data) {
+    mutate(function(myEvents) {
+      myEvents[key] = data;
+      return myEvents;
     });
+  };
 
-    studentsRef.set({});
-    for (var i = 0; i < names.length; i++) {
-      studentsRef.push({
-        name: names[i],
-      });
-    }
-
-    $scope.hideModal();
+  this.remove = function(key) {
+    mutate(function(myEvents) {
+      delete myEvents[key];
+      return myEvents;
+    });
   };
 })
 
-.controller('StudentListCtrl', function($scope, $firebaseArray, studentsRef) {
-  $scope.students = $firebaseArray(studentsRef);
+.factory('eventRefFromUID', function($q, usersRef, eventsRef) {
+  return function(uid) {
+    return $q(function(resolve, reject) {
+      usersRef.child(uid).child('event').once('value', function(snap) {
+        var eventKey = snap.val();
+        resolve(eventsRef.child(eventKey));
+      });
+    });
+  }
 })
 
-.controller('StudentRatingCtrl', function($scope, $stateParams, $firebaseObject, $firebaseArray, studentsRef, ratingsRef) {
-  studentRef = studentsRef.child($stateParams.studentId);
+.factory('addEventModal', function($ionicModal, auth, usersRef, eventRefFromUID, myEvents) {
+  modalPromise = $ionicModal.fromTemplateUrl('templates/add-event.html', {
+    focusFirstInput: true
+  });
 
-  $scope.ratings = $firebaseObject(ratingsRef);
-  $scope.student = $firebaseObject(studentRef);
+  modalPromise.then(function(modal) {
+    modal.scope.e = {accessCode: ''};
 
-  // console.log($scope.student);
+    modal.scope.enter = function() {
+      var code = modal.scope.e.accessCode;
+      auth.$authWithPassword({
+        email: code + "@danceutils.com",
+        password: code
+      }).then(function(authData) {
+        modal.hide();
+        eventRefFromUID(authData.uid).then(function(eventRef) {
+          eventRef.once('value', function(snap) {
+            var eventData = snap.val();
+            myEvents.add(eventKey, {
+              name: eventData.name,
+              code: code
+            });
+          });
+        });
+      }).catch(function(error) {
+        console.log(error);
+      });
+    };
+
+    modal.scope.hide = function() {
+      modal.hide();
+    };
+  });
+
+  return modalPromise;
+})
+
+.controller('AppCtrl', function($scope, $rootScope, $firebaseObject, auth, addEventModal, usersRef, eventRefFromUID) {
+  var unbinder = undefined;
+
+  auth.$onAuth(function(authData) {
+    if (!authData) {
+      if (unbinder) {
+        unbinder();
+        unbinder = undefined;
+      }
+
+      addEventModal.then(function(modal) {
+        modal.show();
+      });
+    } else {
+      eventRefFromUID(authData.uid).then(function(eventRef) {
+        $firebaseObject(eventRef).$bindTo($rootScope, 'event').then(function(unbind) {
+          unbinder = unbind;
+        });
+      });
+    }
+  });
+})
+
+.controller('EventCtrl', function($scope, $rootScope) {
+})
+
+.controller('StudentRatingCtrl', function($scope, $rootScope, $stateParams, $firebaseObject, $firebaseArray) {
+  $scope.student = $rootScope.event.students[$stateParams[studentId]];
+  if (!$scope.student.ratings) {
+    $scope.student.ratings = [];
+  }
 
   $scope.addRating = function(rating) {
-    studentRef.child('ratings').push(rating);
+    $scope.student.ratings.push(rating);
+    $rootScope.event.$save();
   }
 });

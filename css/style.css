@@ -17,3 +17,7 @@ textarea { resize: none; }
     width: 1%;
     white-space: nowrap;
 }
+
+.event-table th, .event-table td {
+    white-space: nowrap;
+}

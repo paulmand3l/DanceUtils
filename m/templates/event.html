@@ -1,22 +1,21 @@
 <ion-view>
-  <ion-nav-title>{{ event.name || 'Event'}}</ion-nav-title>
-  <ion-content>
-    <div class="list">
-      <label class="item item-input">
-        <span class="input-label">Event Name</span>
-        <input type="text" placeholder="Event Name" ng-model="event.name">
-      </label>
-      <label class="item item-input">
-        <span class="input-label">Ratings</span>
-        <input type="text" placeholder="Comma-delimited ratings" ng-model="event.ratings" ng-list>
-      </label>
-      <label class="item item-input">
-        <span class="input-label"># of Students</span>
-        <input id="student-count" type="text" ng-disabled="true" ng-model="students.count">
-      </div>
-    </div>
-    <div class="padding">
-      <button class="button button-block" ng-click="showModal()">Edit Student List</button>
-    </div>
+  <ion-nav-title>{{ event.name || 'Home'}}</ion-nav-title>
+
+  <div class="bar bar-subheader item-input-inset" ng-show="event">
+    <label class="item-input-wrapper">
+      <i class="icon ion-ios-search placeholder-icon"></i>
+      <input type="search" placeholder="Search" ng-model="searchText">
+    </label>
+  </div>
+
+  <ion-content class="has-subheader" ng-show="event">
+    <ion-list>
+      <ion-item ng-repeat="(key, student) in event.students | toArray:true | orderBy:'name' | filter:searchText" href="#/app/{{student.$key}}">
+        {{student.name}}
+        <span class="item-note">
+          <span ng-repeat="rating in student.ratings">{{rating}}</span>
+        </span>
+      </ion-item>
+    </ion-list>
   </ion-content>
 </ion-view>
