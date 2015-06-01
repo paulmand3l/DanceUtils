@@ -19,3 +19,11 @@ textarea {
 #student-count {
     background-color: white;
 }
+
+.button-bar-list .item {
+    border: none;
+}
+
+.button-bar-list .item-content {
+    padding: 0;
+}

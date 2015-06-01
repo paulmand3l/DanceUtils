@@ -1,9 +1,5 @@
-<ion-view hide-back-button="true" can-swipe-back="false">
+<ion-view>
   <ion-nav-title>{{ event.name || 'Home'}}</ion-nav-title>
-  <ion-nav-buttons side="left">
-    <button class="button button-icon button-clear ion-navicon" menu-toggle="left">
-    </button>
-  </ion-nav-buttons>
 
   <div class="bar bar-subheader item-input-inset" ng-show="event">
     <label class="item-input-wrapper">
@@ -14,10 +10,10 @@
 
   <ion-content class="has-subheader" ng-show="event">
     <ion-list>
-      <ion-item ng-repeat="(key, student) in event.students | toArray:true | orderBy:'name' | filter:searchText" href="#/app/event/{{student.$key}}">
+      <ion-item ng-repeat="(key, student) in event.students | toArray:true | orderBy:'name' | filter:searchText" href="#/app/{{student.$key}}">
         {{student.name}}
         <span class="item-note">
-          <span ng-repeat="level in student.levels">{{level}}</span>
+          <span ng-repeat="rating in student.ratings">{{rating}}</span>
         </span>
       </ion-item>
     </ion-list>

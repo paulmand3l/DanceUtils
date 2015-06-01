@@ -1,11 +1,16 @@
 <ion-view>
   <ion-nav-title>{{ student.name || 'Student'}}</ion-nav-title>
   <ion-content>
-    <div class="button-bar" ng-repeat="rating in student.ratings">
-        <a class="button button-large" ng-disabled="true" ng-repeat="r in event.ratings" ng-class="{'button-balanced':rating==r}">{{r}}</a>
-    </div>
+    <ion-list class="button-bar-list" can-swipe="true">
+        <ion-item ng-repeat="level in studentLevels">
+            <div class="button-bar">
+                <a class="button button-large" ng-disabled="true" ng-repeat="l in levels" ng-class="{'button-balanced':level.$value==l}">{{l}}</a>
+            </div>
+            <ion-option-button class="button-assertive ion-close" ng-click="removeLevel(level)"></ion-option-button>
+        </ion-item>
+    </ion-list>
     <div class="button-bar">
-        <a class="button button-large button-positive" ng-repeat="rating in event.ratings" ng-click="addRating(rating)">{{ rating }}</a>
+        <a class="button button-large button-positive" ng-repeat="level in levels" ng-click="addLevel(level)">{{ level }}</a>
     </div>
   </ion-content>
 </ion-view>
