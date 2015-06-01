@@ -1,4 +1,4 @@
-angular.module('starter.controllers', ["firebase"])
+angular.module('mobile.controllers', ["firebase"])
 
 .value('fbURL', 'https://danceutils.firebaseio.com')
 .service('fbRef', function(fbURL) {
@@ -15,8 +15,12 @@ angular.module('starter.controllers', ["firebase"])
 })
 
 .service('myEvents', function() {
+  var getEvents = this.get = function() {
+    return JSON.parse(localStorage['events'] || "{}");
+  };
+
   var mutate = function(modifier) {
-    var myEvents = JSON.parse(localStorage['events']);
+    var myEvents = getEvents();
     myEvents = modifier(myEvents);
     localStorage['events'] = JSON.stringify(myEvents);
   }
@@ -47,7 +51,16 @@ angular.module('starter.controllers', ["firebase"])
   }
 })
 
-.factory('addEventModal', function($ionicModal, auth, usersRef, eventRefFromUID, myEvents) {
+.factory('credsFromCode', function() {
+  return function(code) {
+    return {
+      email: code + "@danceutils.com",
+      password: code
+    };
+  };
+})
+
+.factory('addEventModal', function($rootScope, $ionicModal, $location, auth, usersRef, credsFromCode, eventRefFromUID, myEvents) {
   modalPromise = $ionicModal.fromTemplateUrl('templates/add-event.html', {
     focusFirstInput: true
   });
@@ -57,18 +70,20 @@ angular.module('starter.controllers', ["firebase"])
 
     modal.scope.enter = function() {
       var code = modal.scope.e.accessCode;
-      auth.$authWithPassword({
-        email: code + "@danceutils.com",
-        password: code
-      }).then(function(authData) {
+      modal.scope.e.accessCode = '';
+
+      auth.$unauth();
+      auth.$authWithPassword(credsFromCode(code)).then(function(authData) {
         modal.hide();
         eventRefFromUID(authData.uid).then(function(eventRef) {
           eventRef.once('value', function(snap) {
             var eventData = snap.val();
-            myEvents.add(eventKey, {
+            myEvents.add(snap.key(), {
               name: eventData.name,
               code: code
             });
+            $rootScope.$broadcast('events.added');
+            $location.path('/app/event');
           });
         });
       }).catch(function(error) {
@@ -84,40 +99,82 @@ angular.module('starter.controllers', ["firebase"])
   return modalPromise;
 })
 
-.controller('AppCtrl', function($scope, $rootScope, $firebaseObject, auth, addEventModal, usersRef, eventRefFromUID) {
+.controller('AppCtrl', function($scope, $rootScope, $location, $ionicSideMenuDelegate, $ionicLoading, auth, credsFromCode, addEventModal, myEvents) {
+  $scope.events = myEvents.get();
+  $rootScope.$on('events.added', function() {
+    $scope.events = myEvents.get();
+    console.log($scope.events);
+  });
+
+  $scope.addEvent = function() {
+    addEventModal.then(function(modal) {
+      modal.show();
+      $ionicSideMenuDelegate.toggleLeft(false);
+    });
+  };
+
+  $scope.switchEvents = function(eventCode) {
+    $ionicLoading.show();
+    auth.$unauth();
+    auth.$authWithPassword(credsFromCode(eventCode)).then(function(authData) {
+      $ionicSideMenuDelegate.toggleLeft(false);
+      $location.path('/app/event');
+    });
+  };
+})
+
+.controller('HomeCtrl', function($scope, $location, currentAuth, addEventModal) {
+  if (!currentAuth) {
+    addEventModal.then(function(modal) {
+      modal.show();
+    });
+  } else {
+    $location.path('/app/event');
+  }
+})
+
+.controller('EventCtrl', function($scope, $firebaseObject, $ionicLoading, auth, eventRefFromUID) {
   var unbinder = undefined;
 
-  auth.$onAuth(function(authData) {
-    if (!authData) {
-      if (unbinder) {
-        unbinder();
-        unbinder = undefined;
-      }
+  auth.$onAuth(function(currentAuth) {
+    if (!currentAuth) return;
 
-      addEventModal.then(function(modal) {
-        modal.show();
-      });
-    } else {
-      eventRefFromUID(authData.uid).then(function(eventRef) {
-        $firebaseObject(eventRef).$bindTo($rootScope, 'event').then(function(unbind) {
-          unbinder = unbind;
-        });
-      });
-    }
+    if (unbinder) unbinder();
+
+    eventRefFromUID(currentAuth.uid).then(function(eventRef) {
+      $firebaseObject(eventRef).$bindTo($scope, 'event').then(function(unbind) {
+        $ionicLoading.hide();
+        unbinder = unbind;
+      })
+    });
+  })
+})
+
+.controller('StudentCtrl', function($scope, $stateParams, $location, $firebaseObject, $firebaseArray, currentAuth, eventRefFromUID) {
+  if (!$stateParams.studentId) {
+    $location.path('/app/event');
+  }
+
+  eventRefFromUID(currentAuth.uid).then(function(eventRef) {
+    $scope.levels = $firebaseObject(eventRef.child('levels'));
+
+    var studentRef = eventRef.child('students').child($stateParams.studentId);
+    $scope.student = $firebaseObject(studentRef);
+    $scope.studentLevels = $firebaseArray(studentRef.child('levels'));
   });
-})
 
-.controller('EventCtrl', function($scope, $rootScope) {
-})
+  $scope.addLevel = function(level) {
+    console.log(level, $scope.student, $scope.student.levels);
 
-.controller('StudentRatingCtrl', function($scope, $rootScope, $stateParams, $firebaseObject, $firebaseArray) {
-  $scope.student = $rootScope.event.students[$stateParams[studentId]];
-  if (!$scope.student.ratings) {
-    $scope.student.ratings = [];
-  }
+    if (!$scope.student.levels) {
+      $scope.student.levels = [];
+    }
 
-  $scope.addRating = function(rating) {
-    $scope.student.ratings.push(rating);
-    $rootScope.event.$save();
-  }
+    $scope.studentLevels.$add(level);
+  };
+
+  $scope.removeLevel = function(levelRef) {
+    console.log(levelRef);
+    $scope.studentLevels.$remove(levelRef);
+  };
 });
