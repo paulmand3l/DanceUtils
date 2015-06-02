@@ -80,7 +80,7 @@ angular.module('web', ['web.controllers', 'ui.router', 'ui.bootstrap'])
     }
   })
 
-  .state('in', {
+  .state('events', {
     url: "/events",
     templateUrl: "templates/events.html",
     controller: 'EventsCtrl',

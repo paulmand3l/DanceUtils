@@ -15,13 +15,10 @@ angular.module('web.controllers', ["firebase"])
     }).then(function(authData) {
       $rootScope.authData = authData;
 
-      var userData = {}
-      userData[authData.uid] = {
+      usersRef.child(authData.uid).update({
         email: authData.google.email,
         displayName: authData.google.displayName
-      };
-
-      usersRef.update(userData);
+      });
 
       $location.path('/events');
     }).catch(function(error) {
@@ -41,7 +38,7 @@ angular.module('web.controllers', ["firebase"])
         accessAccount: userData.uid
       });
 
-      usersRef.child(userData.uid).set({
+      usersRef.child(userData.uid).update({
         event: eventKey,
         owner: uid
       });
@@ -65,7 +62,6 @@ angular.module('web.controllers', ["firebase"])
   });
 
   userEventRef.on('child_removed', function(snap) {
-    console.log('deleting', snap.key());
     delete $scope.events[snap.key()];
   });
 
@@ -112,11 +108,9 @@ angular.module('web.controllers', ["firebase"])
         createAccessAccount(e.owner, eventKey, e.accessCode);
       }
 
-      var eventData = {};
-      eventData[eventKey] = e.name;
-      userEventRef.update(eventData);
-
       eventRef.child(eventKey).update(e);
+
+      userEventRef.child(eventKey).set(e.name);
 
       eventRef.child(eventKey).child('students').transaction(function(oldStudents) {
         var students = {};
@@ -129,7 +123,7 @@ angular.module('web.controllers', ["firebase"])
         return students;
       });
     });
-  }
+  };
 
   $scope.removeEvent = function(eventKey) {
     var confirmation = confirm("Are you sure you want to delete this event?\n\nThis action cannot be undone.");
@@ -141,9 +135,10 @@ angular.module('web.controllers', ["firebase"])
       usersRef.child(snap.val().accessAccount).remove();
     });
     eventRef.child(eventKey).remove(function() {
+      console.log('removing', eventKey, 'from usereventref');
       userEventRef.child(eventKey).remove();
     });
-  }
+  };
 
   $scope.logout = function() {
     auth.$unauth();
