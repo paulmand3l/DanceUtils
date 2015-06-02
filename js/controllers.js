@@ -75,10 +75,6 @@ angular.module('web.controllers', ["firebase"])
     $scope.editEvent();
   }
 
-  $scope.toggleAdvanced = function() {
-
-  }
-
   $scope.editEvent = function(eventKey) {
     var modalInstance = $modal.open({
       templateUrl: 'templates/edit-event.html',
@@ -180,11 +176,11 @@ angular.module('web.controllers', ["firebase"])
       return;
     };
 
-    if ($scope.editorStart !== $scope.editor.getValue()) {
+    if ($scope.showAdvanced && $scope.editorStart !== $scope.editor.getValue()) {
       $scope.e.validLevels = $scope.editor.getValue();
     }
 
-    $scope.e.students = $scope.e.students.map(function(name) {
+    $scope.e.students = ($scope.e.students || []).map(function(name) {
       return name.trim().replace(/\s+/, ' ');
     }).filter(function(name) {
       return name.length != 0;

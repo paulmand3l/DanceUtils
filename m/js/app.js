@@ -41,21 +41,6 @@ angular.module('mobile', ['ionic', 'mobile.controllers'])
     controller: 'AppCtrl'
   })
 
-  .state('app.home', {
-    url: "/home",
-    views: {
-      'menuContent': {
-        templateUrl: "templates/home.html",
-        controller: "HomeCtrl"
-      }
-    },
-    resolve: {
-      currentAuth: function(auth) {
-        return auth.$waitForAuth();
-      }
-    }
-  })
-
   .state('app.event', {
     url: "/event",
     views: {
@@ -66,7 +51,7 @@ angular.module('mobile', ['ionic', 'mobile.controllers'])
     },
     resolve: {
       currentAuth: function(auth) {
-        return auth.$requireAuth();
+        return auth.$waitForAuth();
       }
     }
   })
@@ -87,5 +72,5 @@ angular.module('mobile', ['ionic', 'mobile.controllers'])
   })
 
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/app/home');
+  $urlRouterProvider.otherwise('/app/event');
 });

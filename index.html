@@ -19,6 +19,13 @@
     <!-- Custom styles for this template -->
     <link href="css/style.css" rel="stylesheet">
 
+    <script>
+      console.log(window.location.search.indexOf("no"), screen.width);
+      if (window.location.search.indexOf("no") < 0 && screen.width < 800) {
+        document.location = "/m";
+      }
+    </script>
+
 
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
