@@ -69,6 +69,10 @@ angular.module('web.controllers', ["firebase"])
     $scope.editEvent();
   }
 
+  $scope.toggleAdvanced = function() {
+
+  }
+
   $scope.editEvent = function(eventKey) {
     var modalInstance = $modal.open({
       templateUrl: 'templates/edit-event.html',
@@ -148,13 +152,30 @@ angular.module('web.controllers', ["firebase"])
 
 .controller('EditEventCtrl', function($scope, $rootScope, $modalInstance, e, newEvent) {
   $scope.e = e;
-  $scope.newEvent = newEvent
+  $scope.newEvent = newEvent;
+
+  $scope.toggleAdvanced = function() {
+    if (typeof $scope.showAdvanced === "undefined") {
+      $scope.editor = ace.edit("editor");
+      $scope.editor.getSession().setMode("ace/mode/javascript");
+      if (e.validLevels) {
+        $scope.editor.setValue(e.validLevels);
+      }
+      $scope.editorStart = $scope.editor.getValue();
+    }
+
+    $scope.showAdvanced = !$scope.showAdvanced;
+  }
 
   $scope.save = function() {
     if (!$scope.name.$valid) {
       $scope.nameInvalid = true;
       return;
     };
+
+    if ($scope.editorStart !== $scope.editor.getValue()) {
+      $scope.e.validLevels = $scope.editor.getValue();
+    }
 
     $scope.e.students = $scope.e.students.map(function(name) {
       return name.trim().replace(/\s+/, ' ');

@@ -16,6 +16,20 @@
         <label for="event.students">Students ({{e.students.length || 0}})</label>
         <textarea class="form-control" rows="10" id="event.students" ng-model="e.students" ng-list="&#10;" ng-trim="false"></textarea>
     </div>
+
+    <a ng-click="toggleAdvanced()">
+        <span ng-show="showAdvanced">Hide</span>
+        <span ng-hide="showAdvanced">Show</span>
+        Advanced
+    </a>
+
+    <div class="form-group" ng-show="showAdvanced">
+        <label for="event.validLevels">Level Validation Function</label>
+        <div id="editor">function(levels) {
+  return levels.length > 1;
+}
+        </div>
+    </div>
 </div>
 <div class="modal-footer">
     <button class="btn btn-primary" ng-click="save()">Save</button>
