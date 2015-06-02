@@ -14,11 +14,11 @@
 
   <ion-content class="has-subheader" ng-show="event">
     <ion-list>
-      <ion-item ng-repeat="(key, student) in event.students | toArray:true | orderBy:'name' | filter:searchText" href="#/app/event/{{student.$key}}">
-        {{student.name}}
-        <span class="item-note">
-          <span ng-repeat="level in student.levels">{{level}}</span>
-        </span>
+      <ion-item
+          ng-repeat="(key, student) in event.students | toArray:true | orderBy:'name' | filter:searchText"
+          ng-class="{'item-balanced': evalFn(event.validLevels, student.levels)}"
+          href="#/app/event/{{student.$key}}">
+        {{student.name}}<span ng-show="student.levels"> - </span><span ng-repeat="level in student.levels">{{level}}</span>
       </ion-item>
     </ion-list>
   </ion-content>

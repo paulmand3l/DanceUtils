@@ -15,8 +15,13 @@ angular.module('mobile.controllers', ["firebase"])
 })
 
 .service('myEvents', function() {
-  var getEvents = this.get = function() {
-    return JSON.parse(localStorage['events'] || "{}");
+  var getEvents = this.get = function(key) {
+    var myEvents = JSON.parse(localStorage['events'] || "{}");
+    if (key) {
+      return myEvents[key];
+    } else {
+      return myEvents;
+    }
   };
 
   var mutate = function(modifier) {
@@ -123,8 +128,17 @@ angular.module('mobile.controllers', ["firebase"])
   };
 })
 
-.controller('HomeCtrl', function($scope, $location, currentAuth, addEventModal) {
+.controller('HomeCtrl', function($scope, $location, currentAuth, myEvents, credsFromCode, auth, addEventModal) {
   if (!currentAuth) {
+    var events = myEvents.get();
+    if (Object.keys(events).length > 0) {
+      var eventCode = myEvents.get(Object.keys(events)[0]);
+      return auth.$authWithPassword(credsFromCode(eventCode)).then(function(authData) {
+        $ionicSideMenuDelegate.toggleLeft(false);
+        $location.path('/app/event');
+      });
+    }
+
     addEventModal.then(function(modal) {
       modal.show();
     });
@@ -135,6 +149,12 @@ angular.module('mobile.controllers', ["firebase"])
 
 .controller('EventCtrl', function($scope, $firebaseObject, $ionicLoading, auth, eventRefFromUID) {
   var unbinder = undefined;
+
+  $scope.evalFn = function(fnStr, arg) {
+    if (arg) {
+      return eval('('+fnStr+')')(Object.keys(arg).map(function(key) { return arg[key]; }));
+    }
+  };
 
   auth.$onAuth(function(currentAuth) {
     if (!currentAuth) return;
