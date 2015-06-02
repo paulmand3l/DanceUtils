@@ -5,7 +5,7 @@
         <table class="event-table table">
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th class="left">Name</th>
                     <th>Access Code</th>
                     <th>Levels</th>
                     <th>Students</th>
@@ -14,11 +14,11 @@
             </thead>
             <tbody>
                 <tr ng-repeat="(key, event) in events">
-                    <td>{{ event.name }}</td>
-                    <td class="pull-center">{{ event.accessCode }}</td>
-                    <td class="pull-center">{{ event.levels.join(', ') || 'None' }}</td>
-                    <td class="pull-center">{{ sizeOf(event.students) }}</td>
-                    <td class="pull-center">
+                    <td class="left">{{ event.name }}</td>
+                    <td>{{ event.accessCode }}</td>
+                    <td>{{ event.levels.join(', ') || 'None' }}</td>
+                    <td>{{ sizeOf(event.students) }}</td>
+                    <td>
                         <button type="button" class="btn btn-xs btn-info" ng-click="editEvent(key)">Edit</button>
                         <button type="button" class="btn btn-xs btn-danger" ng-click="removeEvent(key)"><i class="fa fa-times"></i></button>
                     </td>

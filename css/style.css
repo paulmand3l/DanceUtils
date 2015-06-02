@@ -12,12 +12,13 @@ body {
 
 textarea { resize: none; }
 
-.pull-center {
-    text-align: center;
-    width: 1%;
-    white-space: nowrap;
+.event-table th.left, .event-table td.left {
+    text-align: left;
+    width: auto;
 }
 
 .event-table th, .event-table td {
     white-space: nowrap;
+    text-align: center;
+    width: 1%;
 }
