@@ -28,12 +28,18 @@ angular.module('web.controllers', ["firebase"])
 
 })
 
-.factory('createAccessAccount', function($rootScope, usersRef, eventRef, auth) {
-  return function(uid, eventKey, accessCode) {
-    auth.$createUser({
+.factory('credsFromCode', function() {
+  return function(accessCode) {
+    return {
       email: accessCode + "@danceutils.com",
       password: accessCode
-    }).then(function(userData) {
+    };
+  };
+})
+
+.factory('createAccessAccount', function($rootScope, usersRef, eventRef, auth, credsFromCode) {
+  return function(uid, eventKey, accessCode) {
+    auth.$createUser(credsFromCode(accessCode)).then(function(userData) {
       eventRef.child(eventKey).update({
         accessAccount: userData.uid
       });
@@ -46,7 +52,7 @@ angular.module('web.controllers', ["firebase"])
   }
 })
 
-.controller('EventsCtrl', function($scope, $rootScope, $location, $modal, $firebaseObject, $q, auth, currentAuth, fbRef, usersRef, eventRef, codeGen, createAccessAccount) {
+.controller('EventsCtrl', function($scope, $rootScope, $location, $modal, $firebaseObject, $q, auth, currentAuth, fbRef, usersRef, eventRef, codeGen, createAccessAccount, credsFromCode) {
   $rootScope.authData = currentAuth;
 
   $scope.events = {}
@@ -137,9 +143,10 @@ angular.module('web.controllers', ["firebase"])
 
     eventRef.child(eventKey).once('value', function(snap) {
       usersRef.child(snap.val().accessAccount).remove();
+      auth.$removeUser(credsFromCode(snap.val().accessCode));
     });
+
     eventRef.child(eventKey).remove(function() {
-      console.log('removing', eventKey, 'from usereventref');
       userEventRef.child(eventKey).remove();
     });
   };
