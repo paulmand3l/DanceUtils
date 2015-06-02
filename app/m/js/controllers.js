@@ -24,6 +24,10 @@ angular.module('mobile.controllers', ["firebase"])
     }
   };
 
+  this.first = function() {
+    return getEvents(Object.keys(getEvents())[0]);
+  }
+
   var mutate = function(modifier) {
     var myEvents = getEvents();
     myEvents = modifier(myEvents);
@@ -32,6 +36,7 @@ angular.module('mobile.controllers', ["firebase"])
 
   this.add = function(key, data) {
     mutate(function(myEvents) {
+      data.key = key;
       myEvents[key] = data;
       return myEvents;
     });
@@ -43,6 +48,10 @@ angular.module('mobile.controllers', ["firebase"])
       return myEvents;
     });
   };
+
+  this.sizeOf = function() {
+    return Object.keys(getEvents()).length;
+  }
 })
 
 .factory('eventRefFromUID', function($q, usersRef, eventsRef) {
@@ -50,7 +59,11 @@ angular.module('mobile.controllers', ["firebase"])
     return $q(function(resolve, reject) {
       usersRef.child(uid).child('event').once('value', function(snap) {
         var eventKey = snap.val();
-        resolve(eventsRef.child(eventKey));
+        if (eventKey) {
+          resolve(eventsRef.child(eventKey));
+        } else {
+          reject("No such event.");
+        }
       });
     });
   }
@@ -77,18 +90,21 @@ angular.module('mobile.controllers', ["firebase"])
       var code = modal.scope.e.accessCode;
       modal.scope.e.accessCode = '';
 
-      auth.$unauth();
+      console.log('Attempting to add:', code, credsFromCode(code));
+
       auth.$authWithPassword(credsFromCode(code)).then(function(authData) {
+        console.log('...Access granted.', authData);
+
         modal.hide();
         eventRefFromUID(authData.uid).then(function(eventRef) {
           eventRef.once('value', function(snap) {
             var eventData = snap.val();
+            console.log('Adding', eventData.name, 'to my events.');
             myEvents.add(snap.key(), {
               name: eventData.name,
               code: code
             });
             $rootScope.$broadcast('events.added');
-            $location.path('/app/event');
           });
         });
       }).catch(function(error) {
@@ -108,7 +124,6 @@ angular.module('mobile.controllers', ["firebase"])
   $scope.events = myEvents.get();
   $rootScope.$on('events.added', function() {
     $scope.events = myEvents.get();
-    console.log($scope.events);
   });
 
   $scope.addEvent = function() {
@@ -120,7 +135,6 @@ angular.module('mobile.controllers', ["firebase"])
 
   $scope.switchEvents = function(eventCode) {
     $ionicLoading.show();
-    auth.$unauth();
     auth.$authWithPassword(credsFromCode(eventCode)).then(function(authData) {
       $ionicSideMenuDelegate.toggleLeft(false);
       $location.path('/app/event');
@@ -128,46 +142,72 @@ angular.module('mobile.controllers', ["firebase"])
   };
 })
 
-.controller('HomeCtrl', function($scope, $location, currentAuth, myEvents, credsFromCode, auth, addEventModal) {
-  if (!currentAuth) {
-    var events = myEvents.get();
-    if (Object.keys(events).length > 0) {
-      var eventCode = myEvents.get(Object.keys(events)[0]);
-      return auth.$authWithPassword(credsFromCode(eventCode)).then(function(authData) {
-        $ionicSideMenuDelegate.toggleLeft(false);
-        $location.path('/app/event');
-      });
-    }
-
-    addEventModal.then(function(modal) {
-      modal.show();
-    });
-  } else {
-    $location.path('/app/event');
-  }
-})
-
-.controller('EventCtrl', function($scope, $firebaseObject, $ionicLoading, auth, eventRefFromUID) {
-  var unbinder = undefined;
-
+.controller('EventCtrl', function($scope, $ionicSideMenuDelegate, $ionicLoading, $firebaseObject, currentAuth, myEvents, credsFromCode, auth, eventRefFromUID, addEventModal) {
   $scope.evalFn = function(fnStr, arg) {
     if (arg) {
       return eval('('+fnStr+')')(Object.keys(arg).map(function(key) { return arg[key]; }));
     }
   };
 
-  auth.$onAuth(function(currentAuth) {
-    if (!currentAuth) return;
+  function unlockUI() {
+    if ($ionicSideMenuDelegate.isOpen()) {
+      $ionicSideMenuDelegate.toggleLeft();
+    }
+    $ionicLoading.hide();
+  }
 
-    if (unbinder) unbinder();
+  function loadFirstEvent() {
+    var firstEvent = myEvents.first();
+    var code = firstEvent.code;
 
+    auth.$authWithPassword(credsFromCode(code)).catch(function(reason) {
+      console.log("Couldn't load first event.", firstEvent.name, reason);
+      myEvents.remove(firstEvent.key);
+      handleUnauth();
+    });
+  }
+
+  var unbinder = undefined;
+  function handleAuth(currentAuth) {
     eventRefFromUID(currentAuth.uid).then(function(eventRef) {
       $firebaseObject(eventRef).$bindTo($scope, 'event').then(function(unbind) {
-        $ionicLoading.hide();
         unbinder = unbind;
-      })
+        unlockUI();
+      });
+    }, function(reason) {
+      console.log(reason);
+      auth.$unauth();
     });
-  })
+  }
+
+  function handleUnauth() {
+    if (unbinder) {
+      unbinder();
+      unbinder = undefined;
+    }
+
+    if (myEvents.sizeOf() > 0) {
+      loadFirstEvent();
+    } else {
+      addEventModal.then(function(modal) {
+        unlockUI();
+        modal.show();
+      });
+    }
+  }
+
+  function main(currentAuth) {
+    $ionicLoading.show();
+    if (currentAuth) {
+      handleAuth(currentAuth);
+    } else {
+      handleUnauth();
+    }
+  }
+
+  main(currentAuth);
+
+  auth.$onAuth(main);
 })
 
 .controller('StudentCtrl', function($scope, $stateParams, $location, $firebaseObject, $firebaseArray, currentAuth, eventRefFromUID) {
@@ -184,8 +224,6 @@ angular.module('mobile.controllers', ["firebase"])
   });
 
   $scope.addLevel = function(level) {
-    console.log(level, $scope.student, $scope.student.levels);
-
     if (!$scope.student.levels) {
       $scope.student.levels = [];
     }
@@ -194,7 +232,6 @@ angular.module('mobile.controllers', ["firebase"])
   };
 
   $scope.removeLevel = function(levelRef) {
-    console.log(levelRef);
     $scope.studentLevels.$remove(levelRef);
   };
 });
