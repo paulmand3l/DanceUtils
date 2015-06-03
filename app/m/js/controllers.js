@@ -14,15 +14,9 @@ angular.module('mobile.controllers', ["firebase"])
   return fbRef.child('users');
 })
 
-.service('myEvents', function() {
+.service('myEvents', function($rootScope) {
   var getEvents = this.get = function(key) {
-    var myEvents = JSON.parse(localStorage['events'] || "{}");
-
-    for (key in myEvents) {
-      if (!myEvents[key].key) {
-        myEvents.key = key
-      }
-    }
+    var myEvents = JSON.parse(/*localStorage['events'] || */"{}");
 
     if (key) {
       return myEvents[key];
@@ -39,6 +33,7 @@ angular.module('mobile.controllers', ["firebase"])
     var myEvents = getEvents();
     myEvents = modifier(myEvents);
     localStorage['events'] = JSON.stringify(myEvents);
+    $rootScope.$broadcast('myEvents.changed');
   }
 
   this.add = function(key, data) {
@@ -111,7 +106,6 @@ angular.module('mobile.controllers', ["firebase"])
               name: eventData.name,
               code: code
             });
-            $rootScope.$broadcast('events.added');
           });
         });
       }).catch(function(error) {
@@ -129,7 +123,7 @@ angular.module('mobile.controllers', ["firebase"])
 
 .controller('AppCtrl', function($scope, $rootScope, $location, $ionicSideMenuDelegate, $ionicLoading, auth, credsFromCode, addEventModal, myEvents) {
   $scope.events = myEvents.get();
-  $rootScope.$on('events.added', function() {
+  $rootScope.$on('myEvents.changed', function() {
     $scope.events = myEvents.get();
   });
 
