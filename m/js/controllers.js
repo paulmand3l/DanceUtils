@@ -16,7 +16,7 @@ angular.module('mobile.controllers', ["firebase"])
 
 .service('myEvents', function($rootScope) {
   var getEvents = this.get = function(key) {
-    var myEvents = JSON.parse(/*localStorage['events'] || */"{}");
+    var myEvents = JSON.parse(localStorage['events'] || "{}");
 
     if (key) {
       return myEvents[key];
