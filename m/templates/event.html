@@ -18,8 +18,22 @@
           ng-repeat="(key, student) in event.students | toArray:true | orderBy:'name' | filter:searchText"
           ng-class="{'item-balanced': evalFn(event.validLevels, student.levels)}"
           href="#/app/event/{{student.$key}}">
-        {{student.name}}<span ng-show="student.levels"> - </span><span ng-repeat="level in student.levels">{{level}}</span>
+        {{student.name}}
+        <span ng-show="evalFn(event.validLevels, student.levels)">({{ evalFn(event.validLevels, student.levels) }})</span>
+        <span ng-show="student.levels">
+          -
+          <span ng-repeat="level in student.levels">{{level}}</span>
+        </span>
       </ion-item>
     </ion-list>
   </ion-content>
+
+  <ion-footer-bar>
+    <h1 class="title">
+      Levels:
+      <span ng-repeat="level in event.levels">
+        {{ level }}({{ studentsInLevel(level, event.students, event.validLevels) }})<span ng-show="!$last"> - </span>
+      </span>
+    </h1>
+  </ion-footer-bar>
 </ion-view>

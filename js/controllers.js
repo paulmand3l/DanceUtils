@@ -55,6 +55,42 @@ angular.module('web.controllers', ["firebase"])
 .controller('EventsCtrl', function($scope, $rootScope, $location, $modal, $firebaseObject, $q, auth, currentAuth, fbRef, usersRef, eventRef, codeGen, createAccessAccount, credsFromCode) {
   $rootScope.authData = currentAuth;
 
+  function resolveLevels(levels) {
+    return Object.keys(levels).map(function(key) {
+      if (!isNaN(Number(levels[key]))) {
+        return Number(levels[key]);
+      } else {
+        return levels[key];
+      }
+    });
+  }
+
+  $scope.evalFn = function(fnStr, arg) {
+    var levelFn = eval('('+fnStr+')');
+    return levelFn(resolveLevels(arg || {}));
+  };
+
+  $scope.studentsInLevel = function(level, students, fnStr) {
+    if (!fnStr) return;
+
+    var levelFn = eval('('+fnStr+')');
+    var count = 0;
+    for (key in students) {
+      var studentLevel = levelFn(resolveLevels(students[key].levels || {}));
+
+      if (typeof studentLevel === "number") {
+        console.log(studentLevel);
+        studentLevel = Math.round(studentLevel).toString();
+      }
+
+      if (level === studentLevel || (typeof level === "boolean" && level === !!studentLevel)) {
+        count++;
+      }
+    }
+    return count;
+  };
+
+
   $scope.events = {}
   var userEventRef = usersRef.child(currentAuth.uid).child('events');
 
