@@ -17,6 +17,14 @@ angular.module('mobile.controllers', ["firebase"])
 .service('myEvents', function($rootScope) {
   var getEvents = this.get = function(key) {
     var myEvents = JSON.parse(localStorage['events'] || "{}");
+    console.log(myEvents);
+
+    for (k in myEvents) {
+      console.log(k, myEvents[k]);
+      if (!myEvents[k].key) {
+        myEvents[k].key = k;
+      }
+    }
 
     if (key) {
       return myEvents[key];
@@ -144,11 +152,44 @@ angular.module('mobile.controllers', ["firebase"])
 })
 
 .controller('EventCtrl', function($scope, $ionicSideMenuDelegate, $ionicLoading, $firebaseObject, currentAuth, myEvents, credsFromCode, auth, eventRefFromUID, addEventModal) {
+  function resolveLevels(levels) {
+    return Object.keys(levels).map(function(key) {
+      if (!isNaN(Number(levels[key]))) {
+        return Number(levels[key]);
+      } else {
+        return levels[key];
+      }
+    });
+  }
+
   $scope.evalFn = function(fnStr, arg) {
-    if (arg) {
-      return eval('('+fnStr+')')(Object.keys(arg).map(function(key) { return arg[key]; }));
+    var levelFn = eval('('+fnStr+')');
+    var level = levelFn(resolveLevels(arg || {}));
+    if (typeof level === "number") {
+      level = Math.round(level * 100) / 100;
     }
+    return level;
   };
+
+  $scope.studentsInLevel = function(level, students, fnStr) {
+    if (!fnStr) return;
+
+    var levelFn = eval('('+fnStr+')');
+    var count = 0;
+    for (key in students) {
+      var studentLevel = levelFn(resolveLevels(students[key].levels || {}));
+
+      if (typeof studentLevel === "number") {
+        studentLevel = Math.round(studentLevel).toString();
+      }
+
+      if (level === studentLevel || (typeof level === "boolean" && level === !!studentLevel)) {
+        count++;
+      }
+    }
+    return count;
+  };
+
 
   function unlockUI() {
     if ($ionicSideMenuDelegate.isOpen()) {

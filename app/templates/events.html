@@ -1,4 +1,4 @@
-<div>
+<div class="container">
     <div class="col-md-9">
         <h1>My Events</h1>
 
@@ -6,9 +6,9 @@
             <thead>
                 <tr>
                     <th class="left">Name</th>
-                    <th>Access Code</th>
-                    <th>Levels</th>
-                    <th>Students</th>
+                    <th tooltip="Give this to your instructors and tell them to visit danceutils.com from their phone." tooltip-append-to-body="true">Access Code</th>
+                    <th tooltip="These are the options instructors will have when rating students." tooltip-append-to-body="true">Levels</th>
+                    <th tooltip="# done auditioning / # total" tooltip-append-to-body="true">Students</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -16,8 +16,12 @@
                 <tr ng-repeat="(key, event) in events">
                     <td class="left">{{ event.name }}</td>
                     <td>{{ event.accessCode }}</td>
-                    <td>{{ event.levels.join(', ') || 'None' }}</td>
-                    <td>{{ sizeOf(event.students) }}</td>
+                    <td>
+                        <span ng-repeat="level in event.levels">
+                            {{ level }}<span class="text-muted">({{ studentsInLevel(level, event.students, event.validLevels) }})</span>
+                        </span>
+                    </td>
+                    <td>{{ studentsInLevel(true, event.students, event.validLevels)}}/{{ sizeOf(event.students) }}</td>
                     <td>
                         <button type="button" class="btn btn-xs btn-info" ng-click="editEvent(key)">Edit</button>
                         <button type="button" class="btn btn-xs btn-danger" ng-click="removeEvent(key)"><i class="fa fa-times"></i></button>
